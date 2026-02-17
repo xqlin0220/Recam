@@ -1,4 +1,4 @@
-namespace Recam.Domain.Entities;
+namespace Remp.Models.Entities;
 
 public class Agent
 {
@@ -11,4 +11,7 @@ public class Agent
     public string? AvatarUrl { get; set; }
 
     public string CompanyName { get; set; } = default!;
+
+    public ICollection<AgentListingCase> AgentListingCases { get; set; } = new List<AgentListingCase>();
+    public ICollection<AgentPhotographyCompany> AgentPhotographyCompanies { get; set; } = new List<AgentPhotographyCompany>();
 }

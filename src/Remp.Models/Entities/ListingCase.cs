@@ -1,8 +1,10 @@
-namespace Recam.Domain.Entities;
+using Remp.Models.Enums;
+
+namespace Remp.Models.Entities;
 
 public class ListingCase
 {
-    public int Id { get; set; }   // PK
+    public int Id { get; set; }
 
     public string Title { get; set; } = default!;
 
@@ -37,13 +39,13 @@ public class ListingCase
     public PropertyType PropertyType { get; set; }
 
     public SaleCategory SaleCategory { get; set; }
+    public ListcaseStatus ListcaseStatus { get; set; }
 
-    public ListingStatus ListingStatus { get; set; }
-
-    // FK to User (string)
     public string UserId { get; set; } = default!;
 
-    // Navigation
-    public ICollection<AgentListingCase> AgentListingCases { get; set; }
-        = new List<AgentListingCase>();
+    public ICollection<MediaAsset> MediaAssets { get; set; } = new List<MediaAsset>();
+
+    public ICollection<CaseContact> CaseContacts { get; set; } = new List<CaseContact>();
+
+    public ICollection<AgentListingCase> AgentListingCases { get; set; } = new List<AgentListingCase>();
 }

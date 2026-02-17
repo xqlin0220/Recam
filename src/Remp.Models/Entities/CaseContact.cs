@@ -1,8 +1,8 @@
-namespace Recam.Domain.Entities;
+namespace Remp.Models.Entities;
 
 public class CaseContact
 {
-    public int ContactId { get; set; }   // PK
+    public int ContactId { get; set; }
 
     public string FirstName { get; set; } = default!;
 
@@ -16,9 +16,7 @@ public class CaseContact
 
     public string PhoneNumber { get; set; } = default!;
 
-    // FK
     public int ListingCaseId { get; set; }
 
-    // Navigation
     public ListingCase ListingCase { get; set; } = default!;
 }
