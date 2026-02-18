@@ -8,10 +8,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.12" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Remp.Service\Remp.Service.csproj" />
+    <ProjectReference Include="..\Remp.Common\Remp.Common.csproj" />
   </ItemGroup>
 
 </Project>

@@ -11,6 +11,21 @@ builder.Services.AddScoped<IEmailSender, EmailSender>();
 
 var app = builder.Build();
 
+app.UseMiddleware<Remp.API.Middlewares.GlobalExceptionMiddleware>();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+app.Run();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
