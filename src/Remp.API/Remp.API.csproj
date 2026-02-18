@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Remp.Service\Remp.Service.csproj" />
     <ProjectReference Include="..\Remp.Common\Remp.Common.csproj" />
+    <ProjectReference Include="..\Remp.DataAccess\Remp.DataAccess.csproj" />
   </ItemGroup>
 
 </Project>

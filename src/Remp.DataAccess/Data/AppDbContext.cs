@@ -1,11 +1,13 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Remp.Models.Entities;
 
 namespace Remp.DataAccess.Data;
 
-public class DbContext : Microsoft.EntityFrameworkCore.DbContext
+public class AppDbContext : IdentityDbContext<IdentityUser, IdentityRole, string>
 {
-    public DbContext(DbContextOptions<DbContext> options) : base(options) { }
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<Agent> Agents => Set<Agent>();
     public DbSet<ListingCase> ListingCases => Set<ListingCase>();
@@ -18,7 +20,6 @@ public class DbContext : Microsoft.EntityFrameworkCore.DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(DbContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 }
