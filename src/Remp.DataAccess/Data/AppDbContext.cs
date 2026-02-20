@@ -5,7 +5,7 @@ using Remp.Models.Entities;
 
 namespace Remp.DataAccess.Data;
 
-public class AppDbContext : IdentityDbContext<IdentityUser, IdentityRole, string>
+public class AppDbContext : IdentityDbContext<AppUser, IdentityRole, string>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
