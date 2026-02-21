@@ -1,4 +1,4 @@
-namespace Remp.Service.DTOs.Auth;
+namespace Remp.Service.DTOs;
 
 public class LoginResponse
 {

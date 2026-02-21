@@ -37,4 +37,25 @@ public class AuthAuditService : IAuthAuditService
             Ip = ip,
             UserAgent = userAgent
         });
+
+    public Task RegisterSuccessAsync(string email, string userId, string role, string? ip, string? userAgent)
+        => _collection.InsertOneAsync(new AuthEvent
+        {
+            EventType = "REGISTER_SUCCESS",
+            Email = email,
+            UserId = userId,
+            Role = role,
+            Ip = ip,
+            UserAgent = userAgent
+        });
+
+    public Task RegisterFailedAsync(string email, string reason, string? ip, string? userAgent)
+        => _collection.InsertOneAsync(new AuthEvent
+        {
+            EventType = "REGISTER_FAILED",
+            Email = email,
+            Reason = reason,
+            Ip = ip,
+            UserAgent = userAgent
+        });
 }

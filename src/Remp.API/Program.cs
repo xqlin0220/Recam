@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Remp.API.Middlewares;
-using Remp.DataAccess.Data; 
+using Remp.DataAccess.Data;
 using Remp.Service.Interfaces;
 using Remp.Service.Services;
 using System.Text;
@@ -21,10 +21,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<IAuthAuditService, AuthAuditService>();
-builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-
-// Identity (AppUser + Role) 
+// Identity (AppUser + Role)
 builder.Services
     .AddIdentity<AppUser, IdentityRole>(options =>
     {
@@ -58,7 +55,7 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-// DI: Your services
+// DI: Your services (只注册一次)
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthAuditService, AuthAuditService>();

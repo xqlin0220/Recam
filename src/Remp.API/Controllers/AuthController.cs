@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Remp.Common.Utilities;
 using Remp.DataAccess.Data;
-using Remp.Service.DTOs.Auth;
+using Remp.Service.DTOs;
 using Remp.Service.Interfaces;
 
 namespace Remp.API.Controllers;
@@ -73,5 +73,62 @@ public class AuthController : ControllerBase
         };
 
         return Ok(ApiResponse<LoginResponse>.Ok(response, "Login successful."));
+    }
+
+    [HttpPost("register")]
+    public async Task<ActionResult<ApiResponse<RegisterResponse>>> Register([FromBody] RegisterRequest request)
+    {
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ua = Request.Headers.UserAgent.ToString();
+
+        // Basic validation
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        {
+            await _audit.RegisterFailedAsync(request.Email ?? "", "EmailOrPasswordEmpty", ip, ua);
+            return BadRequest(ApiResponse<RegisterResponse>.Fail("Email and password are required."));
+        }
+
+        var existing = await _userManager.FindByEmailAsync(request.Email);
+        if (existing != null)
+        {
+            await _audit.RegisterFailedAsync(request.Email, "EmailAlreadyExists", ip, ua);
+            return Conflict(ApiResponse<RegisterResponse>.Fail("Email already exists."));
+        }
+
+        // Create user (password hashing is done by Identity)
+        var user = new AppUser
+        {
+            UserName = request.Email,
+            Email = request.Email,
+            CreatedAt = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        var createResult = await _userManager.CreateAsync(user, request.Password);
+        if (!createResult.Succeeded)
+        {
+            var errors = createResult.Errors.Select(e => e.Description).ToList();
+            await _audit.RegisterFailedAsync(request.Email, "CreateUserFailed", ip, ua);
+            return BadRequest(ApiResponse<RegisterResponse>.Fail("Registration failed.", errors));
+        }
+
+        // Distinguish user/admin by Role (agent defaults to "user")
+        var role = "user";
+        var roleResult = await _userManager.AddToRoleAsync(user, role);
+        if (!roleResult.Succeeded)
+        {
+            var errors = roleResult.Errors.Select(e => e.Description).ToList();
+            await _audit.RegisterFailedAsync(request.Email, "AddRoleFailed", ip, ua);
+            return StatusCode(500, ApiResponse<RegisterResponse>.Fail("Failed to assign role.", errors));
+        }
+
+        await _audit.RegisterSuccessAsync(user.Email!, user.Id, role, ip, ua);
+
+        return Ok(ApiResponse<RegisterResponse>.Ok(new RegisterResponse
+        {
+            UserId = user.Id,
+            Email = user.Email!,
+            Role = role
+        }, "Registration successful."));
     }
 }
