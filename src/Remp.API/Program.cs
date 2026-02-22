@@ -55,10 +55,11 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-// DI: Your services (只注册一次)
+// DI: Your services 
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthAuditService, AuthAuditService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
