@@ -10,11 +10,11 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole, string>
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<Agent> Agents => Set<Agent>();
-    public DbSet<ListingCase> ListingCases => Set<ListingCase>();
+    public DbSet<Listcase> Listcases => Set<Listcase>();
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<CaseContact> CaseContacts => Set<CaseContact>();
     public DbSet<PhotographyCompany> PhotographyCompanies => Set<PhotographyCompany>();
-    public DbSet<AgentListingCase> AgentListingCases => Set<AgentListingCase>();
+    public DbSet<AgentListcase> AgentListcases => Set<AgentListcase>();
     public DbSet<AgentPhotographyCompany> AgentPhotographyCompanies => Set<AgentPhotographyCompany>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

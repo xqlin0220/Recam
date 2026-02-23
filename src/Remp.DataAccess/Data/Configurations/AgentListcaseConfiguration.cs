@@ -4,23 +4,23 @@ using Remp.Models.Entities;
 
 namespace Remp.DataAccess.Data.Configurations;
 
-public class AgentListingCaseConfiguration : IEntityTypeConfiguration<AgentListingCase>
+public class AgentListcaseConfiguration : IEntityTypeConfiguration<AgentListcase>
 {
-    public void Configure(EntityTypeBuilder<AgentListingCase> builder)
+    public void Configure(EntityTypeBuilder<AgentListcase> builder)
     {
-        builder.HasKey(x => new { x.AgentId, x.ListingCaseId });
+        builder.HasKey(x => new { x.AgentId, x.ListcaseId });
 
         builder.Property(x => x.AgentId)
             .HasMaxLength(50);
 
         builder.HasOne(x => x.Agent)
-            .WithMany(x => x.AgentListingCases)
+            .WithMany(x => x.AgentListcases)
             .HasForeignKey(x => x.AgentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.ListingCase)
-            .WithMany(x => x.AgentListingCases)
-            .HasForeignKey(x => x.ListingCaseId)
+        builder.HasOne(x => x.Listcase)
+            .WithMany(x => x.AgentListcases)
+            .HasForeignKey(x => x.ListcaseId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -19,10 +19,10 @@ public class MediaAsset
     public bool IsDeleted { get; set; }
 
     // FK
-    public int ListingCaseId { get; set; }
+    public int ListcaseId { get; set; }
 
     public string UserId { get; set; } = default!;
 
     // Navigation
-    public ListingCase ListingCase { get; set; } = default!;
+    public Listcase Listcase { get; set; } = default!;
 }

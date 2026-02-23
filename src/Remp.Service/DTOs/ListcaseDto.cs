@@ -2,7 +2,7 @@ using Remp.Models.Enums;
 
 namespace Remp.Service.DTOs;
 
-public class ListingCaseDto
+public class ListcaseDto
 {
     public int Id { get; set; }
     public string Title { get; set; } = default!;
@@ -12,7 +12,7 @@ public class ListingCaseDto
     public int Postcode { get; set; }
 
     public PropertyType PropertyType { get; set; }
-    public ListcaseStatus ListingStatus { get; set; }
+    public ListcaseStatus ListcaseStatus { get; set; }
 
     public DateTime CreatedAt { get; set; }
 }

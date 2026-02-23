@@ -12,6 +12,6 @@ public class Agent
 
     public string CompanyName { get; set; } = default!;
 
-    public ICollection<AgentListingCase> AgentListingCases { get; set; } = new List<AgentListingCase>();
+    public ICollection<AgentListcase> AgentListcases { get; set; } = new List<AgentListcase>();
     public ICollection<AgentPhotographyCompany> AgentPhotographyCompanies { get; set; } = new List<AgentPhotographyCompany>();
 }

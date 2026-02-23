@@ -2,7 +2,7 @@ using Remp.Models.Enums;
 
 namespace Remp.Service.DTOs;
 
-public class CreateListingCaseRequest
+public class UpdateListcaseRequest
 {
     public string Title { get; set; } = default!;
     public string Street { get; set; } = default!;
@@ -22,4 +22,6 @@ public class CreateListingCaseRequest
 
     public decimal Longitude { get; set; }
     public decimal Latitude { get; set; }
+
+    public string? Description { get; set; }
 }

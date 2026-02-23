@@ -16,7 +16,7 @@ public class CaseContact
 
     public string PhoneNumber { get; set; } = default!;
 
-    public int ListingCaseId { get; set; }
+    public int ListcaseId { get; set; }
 
-    public ListingCase ListingCase { get; set; } = default!;
+    public Listcase Listcase { get; set; } = default!;
 }

@@ -32,10 +32,10 @@ public class CaseContactConfiguration : IEntityTypeConfiguration<CaseContact>
             .IsRequired()
             .HasMaxLength(50);
 
-        // ListingCase 1 - many CaseContact
-        builder.HasOne(x => x.ListingCase)
+        // Listcase 1 - many CaseContact
+        builder.HasOne(x => x.Listcase)
             .WithMany(x => x.CaseContacts)
-            .HasForeignKey(x => x.ListingCaseId)
+            .HasForeignKey(x => x.ListcaseId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

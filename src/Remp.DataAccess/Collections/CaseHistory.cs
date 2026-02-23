@@ -5,7 +5,7 @@ public class CaseHistory
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public DateTime UtcTime { get; set; } = DateTime.UtcNow;
 
-    public int ListingCaseId { get; set; }                 // SQL Listing ID
+    public int ListcaseId { get; set; }                 // SQL Listing ID
     public string Action { get; set; } = default!;         // "CASE_CREATED"
     public string PerformedByUserId { get; set; } = default!;
     public string PerformedByEmail { get; set; } = default!;
