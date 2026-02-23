@@ -4,9 +4,9 @@ using Remp.Models.Entities;
 
 namespace Remp.DataAccess.Data.Configurations;
 
-public class ListingCaseConfiguration : IEntityTypeConfiguration<ListingCase>
+public class ListcaseConfiguration : IEntityTypeConfiguration<Listcase>
 {
-    public void Configure(EntityTypeBuilder<ListingCase> builder)
+    public void Configure(EntityTypeBuilder<Listcase> builder)
     {
         builder.HasKey(x => x.Id);
 

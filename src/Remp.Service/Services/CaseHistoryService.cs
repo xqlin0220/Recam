@@ -19,7 +19,7 @@ public class CaseHistoryService : ICaseHistoryService
     }
 
     public Task LogCaseCreatedAsync(
-        int listingCaseId,
+        int ListcaseId,
         string performedByUserId,
         string performedByEmail,
         string role,
@@ -29,7 +29,7 @@ public class CaseHistoryService : ICaseHistoryService
     {
         return _collection.InsertOneAsync(new CaseHistory
         {
-            ListingCaseId = listingCaseId,
+            ListcaseId = ListcaseId,
             Action = "CASE_CREATED",
             PerformedByUserId = performedByUserId,
             PerformedByEmail = performedByEmail,
@@ -37,6 +37,28 @@ public class CaseHistoryService : ICaseHistoryService
             Ip = ip,
             UserAgent = userAgent,
             Snapshot = snapshot
+        });
+    }
+
+    public Task LogCaseUpdatedAsync(
+        int ListcaseId,
+        string performedByUserId,
+        string performedByEmail,
+        string role,
+        string? ip,
+        string? userAgent,
+        object? changes = null)
+    {
+        return _collection.InsertOneAsync(new CaseHistory
+        {
+            ListcaseId = ListcaseId,
+            Action = "CASE_UPDATED",
+            PerformedByUserId = performedByUserId,
+            PerformedByEmail = performedByEmail,
+            Role = role,
+            Ip = ip,
+            UserAgent = userAgent,
+            Snapshot = changes
         });
     }
 }

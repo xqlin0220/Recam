@@ -44,7 +44,7 @@ public class UserService : IUserService
 
         return new PagedResult<UserDto>
         {
-            Page = page,
+            PageNumber = page,
             PageSize = pageSize,
             TotalCount = total,
             Items = items

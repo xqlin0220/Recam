@@ -18,10 +18,10 @@ public class MediaAssetConfiguration : IEntityTypeConfiguration<MediaAsset>
             .IsRequired()
             .HasMaxLength(50);
 
-        // ListingCase 1 - many MediaAsset
-        builder.HasOne(x => x.ListingCase)
+        // Listcase 1 - many MediaAsset
+        builder.HasOne(x => x.Listcase)
             .WithMany(x => x.MediaAssets)
-            .HasForeignKey(x => x.ListingCaseId)
+            .HasForeignKey(x => x.ListcaseId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

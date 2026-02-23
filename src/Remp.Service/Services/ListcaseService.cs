@@ -1,0 +1,296 @@
+using Microsoft.EntityFrameworkCore;
+using Remp.DataAccess.Data;
+using Remp.Models.Entities;
+using Remp.Models.Enums;
+using Remp.Service.DTOs;
+using Remp.Service.Interfaces;
+
+namespace Remp.Service.Services;
+
+public class ListcaseService : IListcaseService
+{
+    private readonly AppDbContext _db;
+    private readonly ICaseHistoryService _history;
+
+    public ListcaseService(AppDbContext db, ICaseHistoryService history)
+    {
+        _db = db;
+        _history = history;
+    }
+
+    public async Task<ListcaseDto> CreateAsync(
+        CreateListcaseRequest request,
+        string userId,
+        string email,
+        string role,
+        string? ip,
+        string? userAgent)
+    {
+        if (string.IsNullOrWhiteSpace(request.Title))
+            throw new ArgumentException("Title must not be empty.");
+
+        if (request.Title.Length > 255)
+            throw new ArgumentException("Title must be 255 characters or less.");
+
+        if (string.IsNullOrWhiteSpace(request.Street) ||
+            string.IsNullOrWhiteSpace(request.City) ||
+            string.IsNullOrWhiteSpace(request.State))
+            throw new ArgumentException("Address fields (street/city/state) are required.");
+
+        if (request.Bedrooms < 0 || request.Bathrooms < 0 || request.Garages < 0)
+            throw new ArgumentException("Bedrooms/Bathrooms/Garages must be non-negative.");
+
+        if (request.Price < 0)
+            throw new ArgumentException("Price must be non-negative.");
+
+        var entity = new Listcase
+        {
+            Title = request.Title.Trim(),
+            Street = request.Street.Trim(),
+            City = request.City.Trim(),
+            State = request.State.Trim(),
+            Postcode = request.Postcode,
+            Longitude = request.Longitude,
+            Latitude = request.Latitude,
+            Price = request.Price,
+            Bedrooms = request.Bedrooms,
+            Bathrooms = request.Bathrooms,
+            Garages = request.Garages,
+            FloorArea = request.FloorArea,
+            PropertyType = request.PropertyType,
+            SaleCategory = request.SaleCategory,
+            ListcaseStatus = ListcaseStatus.Created,
+            CreatedAt = DateTime.UtcNow,
+            IsDeleted = false,
+            UserId = userId
+        };
+
+        _db.Listcases.Add(entity);
+        await _db.SaveChangesAsync();
+
+        await _history.LogCaseCreatedAsync(
+            entity.Id,
+            userId,
+            email,
+            role,
+            ip,
+            userAgent,
+            snapshot: new
+            {
+                entity.Title,
+                entity.Street,
+                entity.City,
+                entity.State,
+                entity.Postcode,
+                entity.PropertyType,
+                entity.SaleCategory,
+                entity.Bedrooms,
+                entity.Bathrooms,
+                entity.Garages,
+                entity.Price
+            });
+
+        return new ListcaseDto
+        {
+            Id = entity.Id,
+            Title = entity.Title,
+            ListcaseStatus = entity.ListcaseStatus
+        };
+    }
+
+    public async Task<PagedResult<ListcaseDto>> GetAllAsync(string userId, string role, PagingQuery query)
+    {
+        var pageNumber = query.PageNumber < 1 ? 1 : query.PageNumber;
+        var pageSize = query.PageSize < 1 ? 10 : query.PageSize;
+        if (pageSize > 100) pageSize = 100;
+
+        IQueryable<Listcase> baseQuery;
+
+        if (role == "photographyCompany")
+        {
+            baseQuery = _db.Listcases.Where(x => x.UserId == userId && !x.IsDeleted);
+        }
+        else if (role == "user")
+        {
+            baseQuery =
+                _db.AgentListcases
+                   .Where(al => al.AgentId == userId)
+                   .Select(al => al.Listcase)
+                   .Where(lc => !lc.IsDeleted);
+        }
+        else
+        {
+            baseQuery = _db.Listcases.Where(_ => false);
+        }
+
+        var totalCount = await baseQuery.CountAsync();
+
+        var items = await baseQuery
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new ListcaseDto
+            {
+                Id = x.Id,
+                Title = x.Title,
+                Street = x.Street,
+                City = x.City,
+                State = x.State,
+                Postcode = x.Postcode,
+                PropertyType = x.PropertyType,
+                ListcaseStatus = x.ListcaseStatus,  
+                CreatedAt = x.CreatedAt
+            })
+            .ToListAsync();
+
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        return new PagedResult<ListcaseDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = totalPages
+        };
+    }
+
+    public async Task<ListcaseDto> UpdateAsync(
+        int id,
+        UpdateListcaseRequest request,
+        string userId,
+        string email,
+        string role,
+        string? ip,
+        string? userAgent)
+    {
+        // Business rule: only photographyCompany can update
+        if (role != "photographyCompany")
+            throw new UnauthorizedAccessException("Only photographyCompany users can update listing cases.");
+
+        // Load listing
+        var entity = await _db.Listcases.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+        if (entity == null)
+            throw new KeyNotFoundException($"Listcase with id {id} was not found.");
+
+        // Business rule: can only update cases created under this account
+        if (entity.UserId != userId)
+            throw new UnauthorizedAccessException("You can only update listing cases created under your account.");
+
+        // Validation (detailed messages)
+        var errors = new Dictionary<string, string[]>();
+
+        if (string.IsNullOrWhiteSpace(request.Title))
+            errors["title"] = new[] { "Title must not be empty." };
+        else if (request.Title.Length > 255)
+            errors["title"] = new[] { "Title must be 255 characters or less." };
+
+        if (string.IsNullOrWhiteSpace(request.Street))
+            errors["street"] = new[] { "Street is required." };
+
+        if (string.IsNullOrWhiteSpace(request.City))
+            errors["city"] = new[] { "City is required." };
+
+        if (string.IsNullOrWhiteSpace(request.State))
+            errors["state"] = new[] { "State is required." };
+
+        if (request.Bedrooms < 0)
+            errors["bedrooms"] = new[] { "Bedrooms must be non-negative." };
+
+        if (request.Bathrooms < 0)
+            errors["bathrooms"] = new[] { "Bathrooms must be non-negative." };
+
+        if (request.Garages < 0)
+            errors["garages"] = new[] { "Garages must be non-negative." };
+
+        if (request.Price < 0)
+            errors["price"] = new[] { "Price must be non-negative." };
+
+        if (errors.Count > 0)
+            throw new ArgumentException("Validation failed."); 
+
+        // Capture "before" snapshot for audit
+        var before = new
+        {
+            entity.Title,
+            entity.Description,
+            entity.Street,
+            entity.City,
+            entity.State,
+            entity.Postcode,
+            entity.PropertyType,
+            entity.SaleCategory,
+            entity.Bedrooms,
+            entity.Bathrooms,
+            entity.Garages,
+            entity.Price,
+            entity.FloorArea,
+            entity.Longitude,
+            entity.Latitude,
+            entity.ListcaseStatus
+        };
+
+        // Apply updates
+        entity.Title = request.Title.Trim();
+        entity.Description = request.Description?.Trim();
+        entity.Street = request.Street.Trim();
+        entity.City = request.City.Trim();
+        entity.State = request.State.Trim();
+        entity.Postcode = request.Postcode;
+        entity.PropertyType = request.PropertyType;
+        entity.SaleCategory = request.SaleCategory;
+        entity.Bedrooms = request.Bedrooms;
+        entity.Bathrooms = request.Bathrooms;
+        entity.Garages = request.Garages;
+        entity.Price = request.Price;
+        entity.FloorArea = request.FloorArea;
+        entity.Longitude = request.Longitude;
+        entity.Latitude = request.Latitude;
+
+        await _db.SaveChangesAsync();
+
+        // Capture "after" snapshot
+        var after = new
+        {
+            entity.Title,
+            entity.Description,
+            entity.Street,
+            entity.City,
+            entity.State,
+            entity.Postcode,
+            entity.PropertyType,
+            entity.SaleCategory,
+            entity.Bedrooms,
+            entity.Bathrooms,
+            entity.Garages,
+            entity.Price,
+            entity.FloorArea,
+            entity.Longitude,
+            entity.Latitude,
+            entity.ListcaseStatus
+        };
+
+        // Log to MongoDB CaseHistory
+        await _history.LogCaseUpdatedAsync(
+            entity.Id,
+            userId,
+            email,
+            role,
+            ip,
+            userAgent,
+            changes: new { Before = before, After = after });
+
+        return new ListcaseDto
+        {
+            Id = entity.Id,
+            Title = entity.Title,
+            Street = entity.Street,
+            City = entity.City,
+            State = entity.State,
+            Postcode = entity.Postcode,
+            PropertyType = entity.PropertyType,
+            ListcaseStatus = entity.ListcaseStatus,
+            CreatedAt = entity.CreatedAt
+        };
+    }
+}

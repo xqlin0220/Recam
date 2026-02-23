@@ -2,7 +2,7 @@ using Remp.Models.Enums;
 
 namespace Remp.Models.Entities;
 
-public class ListingCase
+public class Listcase
 {
     public int Id { get; set; }
 
@@ -47,5 +47,5 @@ public class ListingCase
 
     public ICollection<CaseContact> CaseContacts { get; set; } = new List<CaseContact>();
 
-    public ICollection<AgentListingCase> AgentListingCases { get; set; } = new List<AgentListingCase>();
+    public ICollection<AgentListcase> AgentListcases { get; set; } = new List<AgentListcase>();
 }
