@@ -1,4 +1,4 @@
-using Remp.Common.Utilities;
+using Microsoft.EntityFrameworkCore;
 using Remp.DataAccess.Data;
 using Remp.Models.Entities;
 using Remp.Models.Enums;
@@ -26,7 +26,6 @@ public class ListingCaseService : IListingCaseService
         string? ip,
         string? userAgent)
     {
-        // Thorough validation (minimum required set)
         if (string.IsNullOrWhiteSpace(request.Title))
             throw new ArgumentException("Title must not be empty.");
 
@@ -44,7 +43,6 @@ public class ListingCaseService : IListingCaseService
         if (request.Price < 0)
             throw new ArgumentException("Price must be non-negative.");
 
-        // Create entity, SQL Server will generate unique int ID
         var entity = new ListingCase
         {
             Title = request.Title.Trim(),
@@ -61,7 +59,7 @@ public class ListingCaseService : IListingCaseService
             FloorArea = request.FloorArea,
             PropertyType = request.PropertyType,
             SaleCategory = request.SaleCategory,
-            ListcaseStatus = ListcaseStatus.Created, // initial status = Created
+            ListcaseStatus = ListcaseStatus.Created,
             CreatedAt = DateTime.UtcNow,
             IsDeleted = false,
             UserId = userId
@@ -70,7 +68,6 @@ public class ListingCaseService : IListingCaseService
         _db.ListingCases.Add(entity);
         await _db.SaveChangesAsync();
 
-        // Audit to MongoDB CaseHistory
         await _history.LogCaseCreatedAsync(
             entity.Id,
             userId,
@@ -98,6 +95,63 @@ public class ListingCaseService : IListingCaseService
             Id = entity.Id,
             Title = entity.Title,
             ListingStatus = entity.ListcaseStatus
+        };
+    }
+
+    public async Task<PagedResult<ListingCaseDto>> GetAllAsync(string userId, string role, PagingQuery query)
+    {
+        var pageNumber = query.PageNumber < 1 ? 1 : query.PageNumber;
+        var pageSize = query.PageSize < 1 ? 10 : query.PageSize;
+        if (pageSize > 100) pageSize = 100;
+
+        IQueryable<ListingCase> baseQuery;
+
+        if (role == "photographyCompany")
+        {
+            baseQuery = _db.ListingCases.Where(x => x.UserId == userId && !x.IsDeleted);
+        }
+        else if (role == "user")
+        {
+            baseQuery =
+                _db.AgentListingCases
+                   .Where(al => al.AgentId == userId)
+                   .Select(al => al.ListingCase)
+                   .Where(lc => !lc.IsDeleted);
+        }
+        else
+        {
+            baseQuery = _db.ListingCases.Where(_ => false);
+        }
+
+        var totalCount = await baseQuery.CountAsync();
+
+        var items = await baseQuery
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new ListingCaseDto
+            {
+                Id = x.Id,
+                Title = x.Title,
+                Street = x.Street,
+                City = x.City,
+                State = x.State,
+                Postcode = x.Postcode,
+                PropertyType = x.PropertyType,
+                ListingStatus = x.ListcaseStatus,  
+                CreatedAt = x.CreatedAt
+            })
+            .ToListAsync();
+
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        return new PagedResult<ListingCaseDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = totalPages
         };
     }
 }

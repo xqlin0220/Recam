@@ -62,6 +62,7 @@ builder.Services.AddScoped<IAuthAuditService, AuthAuditService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IListingCaseService, ListingCaseService>();
 builder.Services.AddScoped<ICaseHistoryService, CaseHistoryService>();
+builder.Services.AddScoped<IListingCaseService, ListingCaseService>();
 
 var app = builder.Build();
 

@@ -41,4 +41,21 @@ public class ListingsController : ControllerBase
         var result = await _listingService.CreateAsync(request, userId, email, role, ip, ua);
         return Ok(ApiResponse<ListingCaseDto>.Ok(result, "ListingCase created."));
     }
+
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<PagedResult<ListingCaseDto>>>> GetAll(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+        var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
+
+        var result = await _listingService.GetAllAsync(userId, role, new PagingQuery
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        });
+
+        return Ok(ApiResponse<PagedResult<ListingCaseDto>>.Ok(result));
+    }
 }
