@@ -60,6 +60,8 @@ builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthAuditService, AuthAuditService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IListingCaseService, ListingCaseService>();
+builder.Services.AddScoped<ICaseHistoryService, CaseHistoryService>();
 
 var app = builder.Build();
 
