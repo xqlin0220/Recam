@@ -45,6 +45,10 @@ public class ListingCaseConfiguration : IEntityTypeConfiguration<ListingCase>
             .IsRequired()
             .HasMaxLength(50);
 
+        builder.Property(x => x.Title)
+            .IsRequired()
+            .HasMaxLength(255);
+
         // Enums stored as int (default). No extra config needed unless you want conversions.
     }
 }
