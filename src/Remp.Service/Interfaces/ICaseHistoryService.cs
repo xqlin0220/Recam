@@ -19,4 +19,13 @@ public interface ICaseHistoryService
         string? ip,
         string? userAgent,
         object? changes = null);
+
+    Task LogCaseDeletedAsync(
+        int listcaseId,
+        string performedByUserId,
+        string performedByEmail,
+        string role,
+        string? ip,
+        string? userAgent,
+        object? snapshot = null);
 }

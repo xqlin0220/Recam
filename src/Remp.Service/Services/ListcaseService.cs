@@ -293,4 +293,54 @@ public class ListcaseService : IListcaseService
             CreatedAt = entity.CreatedAt
         };
     }
+
+    public async Task DeleteAsync(int id, string userId, string email, string role, string? ip, string? userAgent)
+    {
+        if (role != "photographyCompany")
+            throw new UnauthorizedAccessException("Only photographyCompany can delete a listing.");
+
+        // Load listcase with related to make a snapshot + ensure exists
+        var listcase = await _db.Listcases
+            .Include(x => x.MediaAssets)
+            .Include(x => x.CaseContacts)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (listcase == null)
+            throw new ArgumentException($"Listcase {id} not found.");
+
+        // only owner can delete
+        if (listcase.UserId != userId)
+            throw new UnauthorizedAccessException("You do not have permission to delete this listing.");
+
+        // Optional business rule: Delivered cannot be deleted
+        // if (listcase.ListcaseStatus == ListcaseStatus.Delivered)
+        //     throw new InvalidOperationException("Delivered listings cannot be deleted.");
+
+        var snapshot = new
+        {
+            listcase.Id,
+            listcase.Title,
+            listcase.ListcaseStatus,
+            MediaCount = listcase.MediaAssets?.Count ?? 0,
+            ContactCount = listcase.CaseContacts?.Count ?? 0
+        };
+
+        // IMPORTANT: delete join rows first (AgentListcase)
+        var joins = await _db.AgentListcases
+            .Where(x => x.ListcaseId == id)
+            .ToListAsync();
+        if (joins.Count > 0)
+            _db.AgentListcases.RemoveRange(joins);
+
+        // MediaAssets / CaseContacts will cascade if you configured Cascade.
+        // If you didn't, you can also remove manually:
+        // _db.MediaAssets.RemoveRange(listcase.MediaAssets);
+        // _db.CaseContacts.RemoveRange(listcase.CaseContacts);
+
+        _db.Listcases.Remove(listcase);
+
+        await _db.SaveChangesAsync();
+
+        await _history.LogCaseDeletedAsync(id, userId, email, role, ip, userAgent, snapshot);
+    }
 }
