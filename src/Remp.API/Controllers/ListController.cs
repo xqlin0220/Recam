@@ -91,4 +91,24 @@ public class ListController : ControllerBase
 
         return Ok(ApiResponse<object>.Ok(new { id }, $"Listing {id} deleted successfully."));
     }
+
+    [HttpPatch("{id:int}/status")]
+    [Authorize(Roles = "photographyCompany")]
+    public async Task<ActionResult<ApiResponse<object>>> ChangeStatus(int id, [FromBody] ChangeStatusRequest request)
+    {
+        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+        var email = User.FindFirstValue(ClaimTypes.Email) ?? "";
+        var role = User.FindFirstValue(ClaimTypes.Role) ?? "photographyCompany";
+
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ua = Request.Headers.UserAgent.ToString();
+
+        await _listService.ChangeStatusAsync(id, request.NewStatus, userId, email, role, ip, ua);
+
+        return Ok(ApiResponse<object>.Ok(new
+        {
+            id,
+            status = request.NewStatus.ToString()
+        }, "Listing status updated."));
+    }
 }
