@@ -332,15 +332,94 @@ public class ListcaseService : IListcaseService
         if (joins.Count > 0)
             _db.AgentListcases.RemoveRange(joins);
 
-        // MediaAssets / CaseContacts will cascade if you configured Cascade.
-        // If you didn't, you can also remove manually:
-        // _db.MediaAssets.RemoveRange(listcase.MediaAssets);
-        // _db.CaseContacts.RemoveRange(listcase.CaseContacts);
-
         _db.Listcases.Remove(listcase);
 
         await _db.SaveChangesAsync();
 
         await _history.LogCaseDeletedAsync(id, userId, email, role, ip, userAgent, snapshot);
+    }
+
+     public async Task<ListcaseDetailDto> GetDetailAsync(int id, string userId, string role)
+    {
+        // Permission filter built into query for performance + security
+        IQueryable<Remp.Models.Entities.Listcase> baseQuery;
+
+        if (role == "photographyCompany")
+        {
+            baseQuery = _db.Listcases
+                .Where(x => x.Id == id && !x.IsDeleted && x.UserId == userId);
+        }
+        else if (role == "user") // agent
+        {
+            baseQuery = _db.AgentListcases
+                .Where(al => al.AgentId == userId && al.ListcaseId == id)
+                .Select(al => al.Listcase)
+                .Where(x => !x.IsDeleted);
+        }
+        else
+        {
+            throw new UnauthorizedAccessException("Invalid role.");
+        }
+
+        // One SQL roundtrip: project only fields we need
+        var dto = await baseQuery
+            .AsNoTracking()
+            .Select(x => new ListcaseDetailDto
+            {
+                Id = x.Id,
+                Title = x.Title,
+
+                Street = x.Street,
+                City = x.City,
+                State = x.State,
+                Postcode = x.Postcode,
+
+                Longitude = x.Longitude,
+                Latitude = x.Latitude,
+
+                Price = x.Price,
+                Bedrooms = x.Bedrooms,
+                Bathrooms = x.Bathrooms,
+                Garages = x.Garages,
+                FloorArea = x.FloorArea,
+
+                PropertyType = x.PropertyType,
+                SaleCategory = x.SaleCategory,
+                ListcaseStatus = x.ListcaseStatus,
+
+                CreatedAt = x.CreatedAt,
+
+                MediaAssets = x.MediaAssets
+                    .Where(m => !m.IsDeleted)
+                    .OrderByDescending(m => m.UploadedAt)
+                    .Select(m => new MediaAssetDto
+                    {
+                        Id = m.Id,
+                        MediaType = m.MediaType,
+                        MediaUrl = m.MediaUrl,
+                        UploadedAt = m.UploadedAt,
+                        IsSelect = m.IsSelect,
+                        IsHero = m.IsHero
+                    })
+                    .ToList(),
+
+                Agents = x.AgentListcases
+                    .Select(al => al.Agent)
+                    .Select(a => new AgentDto
+                    {
+                        Id = a.Id,
+                        AgentFirstName = a.AgentFirstName,
+                        AgentLastName = a.AgentLastName,
+                        AvatarUrl = a.AvatarUrl,
+                        CompanyName = a.CompanyName
+                    })
+                    .ToList()
+            })
+            .FirstOrDefaultAsync();
+
+        if (dto == null)
+            throw new ArgumentException($"Listing {id} not found or you have no access.");
+
+        return dto;
     }
 }
