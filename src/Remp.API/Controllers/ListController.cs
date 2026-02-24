@@ -52,6 +52,15 @@ public class ListController : ControllerBase
         return Ok(ApiResponse<PagedResult<ListcaseDto>>.Ok(result));
     }
 
+    public async Task<ActionResult<ApiResponse<ListcaseDetailDto>>> GetDetail(int id)
+    {
+        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+        var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
+
+        var result = await _listService.GetDetailAsync(id, userId, role);
+        return Ok(ApiResponse<ListcaseDetailDto>.Ok(result));
+    }
+
     [HttpPut("{id:int}")]
     [Authorize(Roles = "photographyCompany")]
     public async Task<ActionResult<ApiResponse<ListcaseDto>>> Update(int id, [FromBody] UpdateListcaseRequest request)

@@ -19,4 +19,6 @@ public interface IListcaseService
         string? userAgent);
 
     Task DeleteAsync(int id, string userId, string email, string role, string? ip, string? userAgent);
+
+    Task<ListcaseDetailDto> GetDetailAsync(int id, string userId, string role);
 }
