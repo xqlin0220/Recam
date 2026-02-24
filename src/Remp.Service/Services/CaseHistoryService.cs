@@ -61,4 +61,26 @@ public class CaseHistoryService : ICaseHistoryService
             Snapshot = changes
         });
     }
+
+    public Task LogCaseDeletedAsync(
+    int listcaseId,
+    string performedByUserId,
+    string performedByEmail,
+    string role,
+    string? ip,
+    string? userAgent,
+    object? snapshot = null)
+{
+    return _collection.InsertOneAsync(new CaseHistory
+    {
+        ListcaseId = listcaseId,   
+        Action = "CASE_DELETED",
+        PerformedByUserId = performedByUserId,
+        PerformedByEmail = performedByEmail,
+        Role = role,
+        Ip = ip,
+        UserAgent = userAgent,
+        Snapshot = snapshot
+    });
+}
 }

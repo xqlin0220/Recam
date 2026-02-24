@@ -11,11 +11,11 @@ namespace Remp.API.Controllers;
 [Route("api/listings")]
 public class ListController : ControllerBase
 {
-    private readonly IListcaseService _listingService;
+    private readonly IListcaseService _listService;
 
     public ListController(IListcaseService listingService)
     {
-        _listingService = listingService;
+        _listService = listingService;
     }
 
     // only photographyCompany can create
@@ -30,7 +30,7 @@ public class ListController : ControllerBase
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
         var ua = Request.Headers.UserAgent.ToString();
 
-        var result = await _listingService.CreateAsync(request, userId, email, role, ip, ua);
+        var result = await _listService.CreateAsync(request, userId, email, role, ip, ua);
         return Ok(ApiResponse<ListcaseDto>.Ok(result, "Listcase created."));
     }
 
@@ -43,7 +43,7 @@ public class ListController : ControllerBase
         var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
         var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
 
-        var result = await _listingService.GetAllAsync(userId, role, new PagingQuery
+        var result = await _listService.GetAllAsync(userId, role, new PagingQuery
         {
             PageNumber = pageNumber,
             PageSize = pageSize
@@ -63,7 +63,23 @@ public class ListController : ControllerBase
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
         var ua = Request.Headers.UserAgent.ToString();
 
-        var result = await _listingService.UpdateAsync(id, request, userId, email, role, ip, ua);
+        var result = await _listService.UpdateAsync(id, request, userId, email, role, ip, ua);
         return Ok(ApiResponse<ListcaseDto>.Ok(result, "Listcase updated."));
+    }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "photographyCompany")]
+    public async Task<ActionResult<ApiResponse<object>>> Delete(int id)
+    {
+        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+        var email = User.FindFirstValue(ClaimTypes.Email) ?? "";
+        var role = User.FindFirstValue(ClaimTypes.Role) ?? "photographyCompany";
+
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ua = Request.Headers.UserAgent.ToString();
+
+        await _listService.DeleteAsync(id, userId, email, role, ip, ua);
+
+        return Ok(ApiResponse<object>.Ok(new { id }, $"Listing {id} deleted successfully."));
     }
 }

@@ -17,4 +17,6 @@ public interface IListcaseService
         string role,
         string? ip,
         string? userAgent);
+
+    Task DeleteAsync(int id, string userId, string email, string role, string? ip, string? userAgent);
 }
