@@ -422,4 +422,46 @@ public class ListcaseService : IListcaseService
 
         return dto;
     }
+
+    public async Task ChangeStatusAsync(
+        int id,
+        ListcaseStatus newStatus,
+        string userId,
+        string email,
+        string role,
+        string? ip,
+        string? userAgent)
+    {
+        // Only photographyCompany can change status
+        if (role != "photographyCompany")
+            throw new UnauthorizedAccessException("Only photographyCompany can change listing status.");
+
+        var entity = await _db.Listcases.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+        if (entity == null)
+            throw new ArgumentException($"Listcase {id} not found.");
+
+        // Only owner can change status
+        if (entity.UserId != userId)
+            throw new UnauthorizedAccessException("You do not have permission to change this listing status.");
+
+        var current = entity.ListcaseStatus;
+
+        if (current == newStatus)
+            throw new InvalidOperationException("New status is the same as current status.");
+
+        // Enforce workflow: Created -> Pending -> Delivered
+        if (!IsValidTransition(current, newStatus))
+            throw new InvalidOperationException($"Invalid status transition: {current} -> {newStatus}.");
+
+        entity.ListcaseStatus = newStatus;
+        await _db.SaveChangesAsync();
+
+        await _history.LogStatusChangedAsync(id, current, newStatus, userId, email, role, ip, userAgent);
+    }
+
+    private static bool IsValidTransition(ListcaseStatus from, ListcaseStatus to)
+    {
+        return (from == ListcaseStatus.Created && to == ListcaseStatus.Pending)
+            || (from == ListcaseStatus.Pending && to == ListcaseStatus.Delivered);
+    }
 }

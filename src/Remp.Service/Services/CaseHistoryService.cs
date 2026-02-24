@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 using Remp.DataAccess.Collections;
 using Remp.Service.Interfaces;
+using Remp.Models.Enums;
 
 namespace Remp.Service.Services;
 
@@ -63,24 +64,51 @@ public class CaseHistoryService : ICaseHistoryService
     }
 
     public Task LogCaseDeletedAsync(
-    int listcaseId,
-    string performedByUserId,
-    string performedByEmail,
-    string role,
-    string? ip,
-    string? userAgent,
-    object? snapshot = null)
-{
-    return _collection.InsertOneAsync(new CaseHistory
+        int listcaseId,
+        string performedByUserId,
+        string performedByEmail,
+        string role,
+        string? ip,
+        string? userAgent,
+        object? snapshot = null)
     {
-        ListcaseId = listcaseId,   
-        Action = "CASE_DELETED",
-        PerformedByUserId = performedByUserId,
-        PerformedByEmail = performedByEmail,
-        Role = role,
-        Ip = ip,
-        UserAgent = userAgent,
-        Snapshot = snapshot
-    });
-}
+        return _collection.InsertOneAsync(new CaseHistory
+        {
+            ListcaseId = listcaseId,   
+            Action = "CASE_DELETED",
+            PerformedByUserId = performedByUserId,
+            PerformedByEmail = performedByEmail,
+            Role = role,
+            Ip = ip,
+            UserAgent = userAgent,
+            Snapshot = snapshot
+        });
+    }
+
+    public Task LogStatusChangedAsync(
+        int listcaseId,
+        ListcaseStatus from,
+        ListcaseStatus to,
+        string performedByUserId,
+        string performedByEmail,
+        string role,
+        string? ip,
+        string? userAgent)
+    {
+        return _collection.InsertOneAsync(new CaseHistory
+        {
+            ListcaseId = listcaseId,
+            Action = "STATUS_CHANGED",
+            PerformedByUserId = performedByUserId,
+            PerformedByEmail = performedByEmail,
+            Role = role,
+            Ip = ip,
+            UserAgent = userAgent,
+            Snapshot = new
+            {
+                From = from.ToString(),
+                To = to.ToString()
+            }
+        });
+    }
 }
