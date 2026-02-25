@@ -464,4 +464,78 @@ public class ListcaseService : IListcaseService
         return (from == ListcaseStatus.Created && to == ListcaseStatus.Pending)
             || (from == ListcaseStatus.Pending && to == ListcaseStatus.Delivered);
     }
+
+    public async Task<List<ListMediaGroupDto>> GetMediaGroupedAsync(int listcaseId, string userId, string role)
+    {
+        // Permission check by role:
+        // photographyCompany: must own the listcase
+        // user(agent): must be assigned via AgentListcases
+
+        bool hasAccess;
+
+        if (role == "photographyCompany")
+        {
+            hasAccess = await _db.Listcases
+                .AsNoTracking()
+                .AnyAsync(x => x.Id == listcaseId && !x.IsDeleted && x.UserId == userId);
+        }
+        else if (role == "user")
+        {
+            hasAccess = await _db.AgentListcases
+                .AsNoTracking()
+                .AnyAsync(x => x.ListcaseId == listcaseId && x.AgentId == userId);
+        }
+        else
+        {
+            throw new UnauthorizedAccessException("Invalid role.");
+        }
+
+        if (!hasAccess)
+            throw new UnauthorizedAccessException("You do not have access to this listing.");
+
+        // Fetch media list (SQL projection)
+        var media = await _db.MediaAssets
+            .AsNoTracking()
+            .Where(m => m.ListcaseId == listcaseId && !m.IsDeleted)
+            .Select(m => new ListingMediaItemDto
+            {
+                Id = m.Id,
+                MediaUrl = m.MediaUrl,
+                UploadedAt = m.UploadedAt,
+                IsSelect = m.IsSelect,
+                IsHero = m.IsHero
+            })
+            .ToListAsync();
+
+        // Group by MediaType (need MediaType in projection)
+        // If your MediaAsset has MediaType property (it should), use it directly:
+        var grouped = await _db.MediaAssets
+            .AsNoTracking()
+            .Where(m => m.ListcaseId == listcaseId && !m.IsDeleted)
+            .Select(m => new
+            {
+                m.MediaType,
+                Item = new ListingMediaItemDto
+                {
+                    Id = m.Id,
+                    MediaUrl = m.MediaUrl,
+                    UploadedAt = m.UploadedAt,
+                    IsSelect = m.IsSelect,
+                    IsHero = m.IsHero
+                }
+            })
+            .ToListAsync();
+
+        return grouped
+            .GroupBy(x => x.MediaType)
+            .Select(g => new ListMediaGroupDto
+            {
+                MediaType = g.Key,
+                Items = g.Select(x => x.Item)
+                        .OrderByDescending(x => x.UploadedAt)
+                        .ToList()
+            })
+            .OrderBy(g => g.MediaType) // optional
+            .ToList();
+    }
 }

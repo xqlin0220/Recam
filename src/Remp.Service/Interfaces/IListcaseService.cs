@@ -29,4 +29,6 @@ public interface IListcaseService
         string role,
         string? ip,
         string? userAgent);
+
+    Task<List<ListMediaGroupDto>> GetMediaGroupedAsync(int listcaseId, string userId, string role);
 }
