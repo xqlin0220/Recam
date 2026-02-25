@@ -10,17 +10,19 @@ namespace Remp.Service.Services;
 public class UserService : IUserService
 {
     private readonly UserManager<AppUser> _userManager;
+    private readonly AppDbContext _db;
 
-    public UserService(UserManager<AppUser> userManager)
+    public UserService(UserManager<AppUser> userManager, AppDbContext db)
     {
         _userManager = userManager;
+        _db = db;
     }
 
     public async Task<PagedResult<UserDto>> GetUsersAsync(int page, int pageSize, CancellationToken ct = default)
     {
         page = page < 1 ? 1 : page;
         pageSize = pageSize < 1 ? 10 : pageSize;
-        pageSize = pageSize > 100 ? 100 : pageSize; // protect API
+        pageSize = pageSize > 100 ? 100 : pageSize;
 
         var query = _userManager.Users.AsNoTracking();
 
@@ -48,6 +50,43 @@ public class UserService : IUserService
             PageSize = pageSize,
             TotalCount = total,
             Items = items
+        };
+    }
+
+    public async Task<CurrentUserDto> GetMeAsync(string userId, string email, string role)
+    {
+        List<int> listingIds;
+
+        if (role == "photographyCompany")
+        {
+            // Listcases created by this user
+            listingIds = await _db.Listcases
+                .AsNoTracking()
+                .Where(x => x.UserId == userId && !x.IsDeleted)
+                .Select(x => x.Id)
+                .ToListAsync();
+        }
+        else if (role == "user")
+        {
+            // Listcases assigned to this agent
+            listingIds = await _db.AgentListcases
+                .AsNoTracking()
+                .Where(x => x.AgentId == userId)
+                .Select(x => x.ListcaseId)
+                .Distinct()
+                .ToListAsync();
+        }
+        else
+        {
+            listingIds = new List<int>();
+        }
+
+        return new CurrentUserDto
+        {
+            UserId = userId,
+            Email = email,
+            Role = role,
+            ListingIds = listingIds
         };
     }
 }
