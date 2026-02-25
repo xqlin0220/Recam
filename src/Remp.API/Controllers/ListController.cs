@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Remp.Common.Utilities;
 using Remp.Service.DTOs;
 using Remp.Service.Interfaces;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Remp.API.Controllers;
 
@@ -110,5 +111,16 @@ public class ListController : ControllerBase
             id,
             status = request.NewStatus.ToString()
         }, "Listing status updated."));
+    }
+
+    [HttpGet("{id:int}/media")]
+    [Authorize(Roles = "photographyCompany,user")]
+    public async Task<ActionResult<ApiResponse<List<ListMediaGroupDto>>>> GetMedia(int id)
+    {
+        var userId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? "";
+        var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+
+        var result = await _listService.GetMediaGroupedAsync(id, userId, role);
+        return Ok(ApiResponse<List<ListMediaGroupDto>>.Ok(result));
     }
 }
