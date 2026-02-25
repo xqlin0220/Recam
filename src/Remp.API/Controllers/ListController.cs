@@ -123,4 +123,15 @@ public class ListController : ControllerBase
         var result = await _listService.GetMediaGroupedAsync(id, userId, role);
         return Ok(ApiResponse<List<ListMediaGroupDto>>.Ok(result));
     }
+
+    [HttpGet("{id:int}/contacts")]
+    [Authorize(Roles = "photographyCompany,user")]
+    public async Task<ActionResult<ApiResponse<List<CaseContactDto>>>> GetContacts(int id)
+    {
+        var userId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? "";
+        var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+
+        var result = await _listService.GetCaseContactsAsync(id, userId, role);
+        return Ok(ApiResponse<List<CaseContactDto>>.Ok(result));
+    }
 }

@@ -538,4 +538,49 @@ public class ListcaseService : IListcaseService
             .OrderBy(g => g.MediaType) // optional
             .ToList();
     }
+
+    public async Task<List<CaseContactDto>> GetCaseContactsAsync(int listcaseId, string userId, string role)
+    {
+        // Access control
+        bool hasAccess;
+
+        if (role == "photographyCompany")
+        {
+            hasAccess = await _db.Listcases
+                .AsNoTracking()
+                .AnyAsync(x => x.Id == listcaseId && !x.IsDeleted && x.UserId == userId);
+        }
+        else if (role == "user") // agent
+        {
+            hasAccess = await _db.AgentListcases
+                .AsNoTracking()
+                .AnyAsync(x => x.ListcaseId == listcaseId && x.AgentId == userId);
+        }
+        else
+        {
+            throw new UnauthorizedAccessException("Invalid role.");
+        }
+
+        if (!hasAccess)
+            throw new UnauthorizedAccessException("You do not have access to this listing.");
+
+        // Fetch contacts from SQL Server
+        var contacts = await _db.CaseContacts
+            .AsNoTracking()
+            .Where(c => c.ListcaseId == listcaseId)
+            .OrderBy(c => c.LastName)
+            .ThenBy(c => c.FirstName)
+            .Select(c => new CaseContactDto
+            {
+                ContactId = c.ContactId,
+                ListcaseId = c.ListcaseId,
+                FirstName = c.FirstName,
+                LastName = c.LastName,
+                Email = c.Email,
+                PhoneNumber = c.PhoneNumber
+            })
+            .ToListAsync();
+
+        return contacts;
+    }
 }
