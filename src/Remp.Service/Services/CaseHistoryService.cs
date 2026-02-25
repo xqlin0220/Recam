@@ -111,4 +111,27 @@ public class CaseHistoryService : ICaseHistoryService
             }
         });
     }
+
+    public Task LogMediaDeletedAsync(
+        int listcaseId,
+        int mediaId,
+        string performedByUserId,
+        string performedByEmail,
+        string role,
+        string? ip,
+        string? userAgent,
+        object? snapshot = null)
+    {
+        return _collection.InsertOneAsync(new CaseHistory
+        {
+            ListcaseId = listcaseId,
+            Action = "MEDIA_DELETED",
+            PerformedByUserId = performedByUserId,
+            PerformedByEmail = performedByEmail,
+            Role = role,
+            Ip = ip,
+            UserAgent = userAgent,
+            Snapshot = snapshot ?? new { MediaId = mediaId }
+        });
+    }
 }

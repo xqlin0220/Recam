@@ -39,4 +39,14 @@ public interface ICaseHistoryService
         string role,
         string? ip,
         string? userAgent);
+
+    Task LogMediaDeletedAsync(
+        int listcaseId,
+        int mediaId,
+        string performedByUserId,
+        string performedByEmail,
+        string role,
+        string? ip,
+        string? userAgent,
+        object? snapshot = null);
 }
