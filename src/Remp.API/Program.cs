@@ -63,6 +63,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IListcaseService, ListcaseService>();
 builder.Services.AddScoped<ICaseHistoryService, CaseHistoryService>();
 builder.Services.AddScoped<IMediaService, MediaService>();
+builder.Services.AddScoped<IPhotographyCompanyService, PhotographyCompanyService>();
 
 var app = builder.Build();
 
