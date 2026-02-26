@@ -24,7 +24,7 @@ public class ListController : ControllerBase
     [Authorize(Roles = "photographyCompany")]
     public async Task<ActionResult<ApiResponse<ListcaseDto>>> Create([FromBody] CreateListcaseRequest request)
     {
-        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+        var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? "";
         var email = User.FindFirstValue(ClaimTypes.Email) ?? "";
         var role = User.FindFirstValue(ClaimTypes.Role) ?? "photographyCompany";
 
@@ -41,7 +41,7 @@ public class ListController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10)
     {
-        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+        var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? "";
         var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
 
         var result = await _listService.GetAllAsync(userId, role, new PagingQuery
@@ -53,9 +53,11 @@ public class ListController : ControllerBase
         return Ok(ApiResponse<PagedResult<ListcaseDto>>.Ok(result));
     }
 
+    [HttpGet("{id:int}")]
+    [Authorize(Roles = "photographyCompany,user")]
     public async Task<ActionResult<ApiResponse<ListcaseDetailDto>>> GetDetail(int id)
     {
-        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+        var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? "";
         var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
 
         var result = await _listService.GetDetailAsync(id, userId, role);
@@ -66,7 +68,7 @@ public class ListController : ControllerBase
     [Authorize(Roles = "photographyCompany")]
     public async Task<ActionResult<ApiResponse<ListcaseDto>>> Update(int id, [FromBody] UpdateListcaseRequest request)
     {
-        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+        var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? "";
         var email = User.FindFirstValue(ClaimTypes.Email) ?? "";
         var role = User.FindFirstValue(ClaimTypes.Role) ?? "photographyCompany";
 
@@ -97,7 +99,7 @@ public class ListController : ControllerBase
     [Authorize(Roles = "photographyCompany")]
     public async Task<ActionResult<ApiResponse<object>>> ChangeStatus(int id, [FromBody] ChangeStatusRequest request)
     {
-        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+        var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? "";
         var email = User.FindFirstValue(ClaimTypes.Email) ?? "";
         var role = User.FindFirstValue(ClaimTypes.Role) ?? "photographyCompany";
 
@@ -117,19 +119,20 @@ public class ListController : ControllerBase
     [Authorize(Roles = "photographyCompany,user")]
     public async Task<ActionResult<ApiResponse<List<ListMediaGroupDto>>>> GetMedia(int id)
     {
-        var userId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? "";
-        var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+        var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? "";
+        var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
 
         var result = await _listService.GetMediaGroupedAsync(id, userId, role);
         return Ok(ApiResponse<List<ListMediaGroupDto>>.Ok(result));
     }
 
+
     [HttpGet("{id:int}/contacts")]
     [Authorize(Roles = "photographyCompany,user")]
     public async Task<ActionResult<ApiResponse<List<CaseContactDto>>>> GetContacts(int id)
     {
-        var userId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? "";
-        var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+        var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? "";
+        var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
 
         var result = await _listService.GetCaseContactsAsync(id, userId, role);
         return Ok(ApiResponse<List<CaseContactDto>>.Ok(result));
