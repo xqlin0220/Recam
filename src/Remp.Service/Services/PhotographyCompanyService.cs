@@ -50,4 +50,27 @@ public class PhotographyCompanyService : IPhotographyCompanyService
         _db.AgentPhotographyCompanies.Add(join);
         await _db.SaveChangesAsync();
     }
+
+    public async Task<List<AgentSummaryDto>> GetAgentsAsync(string photographyCompanyUserId)
+    {
+        // Join: AgentPhotographyCompanies -> Agents -> AspNetUsers (AppUser) for Email
+        var result = await (
+            from apc in _db.AgentPhotographyCompanies.AsNoTracking()
+            join a in _db.Agents.AsNoTracking() on apc.AgentId equals a.Id
+            join u in _db.Users.AsNoTracking() on apc.AgentId equals u.Id
+            where apc.PhotographyCompanyId == photographyCompanyUserId
+            orderby a.AgentFirstName, a.AgentLastName
+            select new AgentSummaryDto
+            {
+                AgentUserId = a.Id,
+                Email = u.Email ?? "",
+                AgentFirstName = a.AgentFirstName,
+                AgentLastName = a.AgentLastName,
+                AvatarUrl = a.AvatarUrl,
+                CompanyName = a.CompanyName
+            }
+        ).ToListAsync();
+
+        return result;
+    }
 }

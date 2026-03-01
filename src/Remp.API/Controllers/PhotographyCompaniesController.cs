@@ -31,4 +31,16 @@ public class PhotographyCompaniesController : ControllerBase
 
         return Ok(ApiResponse<object>.Ok(new { }, "Agent added successfully."));
     }
+
+    [HttpGet("agents")]
+    [Authorize(Roles = "photographyCompany")]
+    public async Task<ActionResult<ApiResponse<List<AgentSummaryDto>>>> GetAgents()
+    {
+        var companyUserId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? "";
+        if (string.IsNullOrWhiteSpace(companyUserId))
+            return Unauthorized(ApiResponse<List<AgentSummaryDto>>.Fail("Invalid token."));
+
+        var result = await _service.GetAgentsAsync(companyUserId);
+        return Ok(ApiResponse<List<AgentSummaryDto>>.Ok(result));
+    }
 }
