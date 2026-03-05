@@ -49,4 +49,13 @@ public interface ICaseHistoryService
         string? ip,
         string? userAgent,
         object? snapshot = null);
+
+    Task LogCaseContactAddedAsync(
+        int listcaseId,
+        string userId,
+        string email,
+        string role,
+        string? ip,
+        string? userAgent,
+        object? snapshot = null);
 }

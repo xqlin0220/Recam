@@ -583,4 +583,84 @@ public class ListcaseService : IListcaseService
 
         return contacts;
     }
+
+    public async Task<CaseContactDto> AddCaseContactAsync(
+        int listcaseId,
+        CreateCaseContactRequest request,
+        string userId,
+        string email,
+        string role,
+        string? ip,
+        string? userAgent)
+    {
+        // Only Agent can add contacts
+        if (role != "user")
+            throw new UnauthorizedAccessException("Only Agent users can add case contacts.");
+
+        // Must be assigned to the listing
+        var assigned = await _db.AgentListcases
+            .AsNoTracking()
+            .AnyAsync(al => al.ListcaseId == listcaseId && al.AgentId == userId);
+
+        if (!assigned)
+            throw new UnauthorizedAccessException("You do not have access to this listing.");
+
+        // Basic validation
+        if (string.IsNullOrWhiteSpace(request.FirstName))
+            throw new ArgumentException("FirstName is required.");
+
+        if (string.IsNullOrWhiteSpace(request.LastName))
+            throw new ArgumentException("LastName is required.");
+
+        if (string.IsNullOrWhiteSpace(request.Email))
+            throw new ArgumentException("Email is required.");
+
+        if (string.IsNullOrWhiteSpace(request.PhoneNumber))
+            throw new ArgumentException("PhoneNumber is required.");
+
+        var entity = new CaseContact
+        {
+            ListcaseId = listcaseId,
+            FirstName = request.FirstName.Trim(),
+            LastName = request.LastName.Trim(),
+            Email = request.Email.Trim(),
+            PhoneNumber = request.PhoneNumber.Trim(),
+            CompanyName = request.CompanyName?.Trim(),
+            ProfileUrl = request.ProfileUrl?.Trim()
+        };
+
+        _db.CaseContacts.Add(entity);
+        await _db.SaveChangesAsync();
+
+        // Log to MongoDB (add a new method in ICaseHistoryService, or reuse an existing one)
+        await _history.LogCaseContactAddedAsync(
+            listcaseId,
+            userId,
+            email,
+            role,
+            ip,
+            userAgent,
+            snapshot: new
+            {
+                entity.ContactId,
+                entity.FirstName,
+                entity.LastName,
+                entity.Email,
+                entity.PhoneNumber,
+                entity.CompanyName,
+                entity.ProfileUrl
+            });
+
+        return new CaseContactDto
+        {
+            ContactId = entity.ContactId,
+            ListcaseId = entity.ListcaseId,
+            FirstName = entity.FirstName,
+            LastName = entity.LastName,
+            CompanyName = entity.CompanyName,
+            ProfileUrl = entity.ProfileUrl,
+            Email = entity.Email,
+            PhoneNumber = entity.PhoneNumber
+        };
+    }
 }
