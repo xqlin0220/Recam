@@ -65,6 +65,7 @@ builder.Services.AddScoped<ICaseHistoryService, CaseHistoryService>();
 builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddScoped<IPhotographyCompanyService, PhotographyCompanyService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAgentService, AgentService>();
 builder.Services.AddScoped<IAdminAuditLogService, AdminAuditLogService>();
 
 var app = builder.Build();
