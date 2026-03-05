@@ -137,4 +137,20 @@ public class ListController : ControllerBase
         var result = await _listService.GetCaseContactsAsync(id, userId, role);
         return Ok(ApiResponse<List<CaseContactDto>>.Ok(result));
     }
+    [HttpPost("{id:int}/contacts")]
+    [Authorize(Roles = "user")]
+    public async Task<ActionResult<ApiResponse<CaseContactDto>>> AddContact(
+        int id,
+        [FromBody] CreateCaseContactRequest request)
+    {
+        var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? "";
+        var email = User.FindFirstValue(JwtRegisteredClaimNames.Email) ?? "";
+        var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
+
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ua = Request.Headers.UserAgent.ToString();
+
+        var result = await _listService.AddCaseContactAsync(id, request, userId, email, role, ip, ua);
+        return Ok(ApiResponse<CaseContactDto>.Ok(result, "Case contact added."));
+    }
 }

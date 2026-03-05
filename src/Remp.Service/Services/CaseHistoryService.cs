@@ -134,4 +134,26 @@ public class CaseHistoryService : ICaseHistoryService
             Snapshot = snapshot ?? new { MediaId = mediaId }
         });
     }
+
+    public Task LogCaseContactAddedAsync(
+        int listcaseId,
+        string userId,
+        string email,
+        string role,
+        string? ip,
+        string? userAgent,
+        object? snapshot = null)
+    {
+        return _collection.InsertOneAsync(new CaseHistory
+        {
+            ListcaseId = listcaseId,
+            Action = "CASE_CONTACT_ADDED",
+            PerformedByUserId = userId,
+            PerformedByEmail = email,
+            Role = role,
+            Ip = ip,
+            UserAgent = userAgent,
+            Snapshot = snapshot
+        });
+    }
 }

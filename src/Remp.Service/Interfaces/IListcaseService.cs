@@ -32,4 +32,12 @@ public interface IListcaseService
 
     Task<List<ListMediaGroupDto>> GetMediaGroupedAsync(int listcaseId, string userId, string role);
     Task<List<CaseContactDto>> GetCaseContactsAsync(int listcaseId, string userId, string role);
+    Task<CaseContactDto> AddCaseContactAsync(
+        int listcaseId,
+        CreateCaseContactRequest request,
+        string userId,
+        string email,
+        string role,
+        string? ip,
+        string? userAgent);
 }
