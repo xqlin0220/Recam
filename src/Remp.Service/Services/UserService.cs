@@ -11,11 +11,13 @@ public class UserService : IUserService
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly AppDbContext _db;
+    private readonly IAdminAuditLogService _audit;
 
-    public UserService(UserManager<AppUser> userManager, AppDbContext db)
+    public UserService(UserManager<AppUser> userManager, AppDbContext db, IAdminAuditLogService audit)
     {
         _userManager = userManager;
         _db = db;
+        _audit = audit;
     }
 
     public async Task<PagedResult<UserDto>> GetUsersAsync(int page, int pageSize, CancellationToken ct = default)
@@ -88,5 +90,36 @@ public class UserService : IUserService
             Role = role,
             ListingIds = listingIds
         };
+    }
+
+    public async Task ChangePasswordAsync(
+        string userId,
+        string email,
+        string role,
+        UpdatePasswordRequest request,
+        string? ip,
+        string? userAgent)
+    {
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword))
+            throw new ArgumentException("CurrentPassword is required.");
+
+        if (string.IsNullOrWhiteSpace(request.NewPassword))
+            throw new ArgumentException("NewPassword is required.");
+
+        if (request.NewPassword.Length < 8)
+            throw new ArgumentException("NewPassword must be at least 8 characters.");
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            throw new KeyNotFoundException("User not found.");
+
+        var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        if (!result.Succeeded)
+        {
+            var msg = string.Join("; ", result.Errors.Select(e => e.Description));
+            throw new ArgumentException($"Change password failed: {msg}");
+        }
+
+        await _audit.LogPasswordChangedAsync(userId, email, role, ip, userAgent);
     }
 }

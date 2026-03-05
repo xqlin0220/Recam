@@ -44,4 +44,20 @@ public class UsersController : ControllerBase
         var result = await _userService.GetMeAsync(userId, email ?? "", role);
         return Ok(ApiResponse<CurrentUserDto>.Ok(result));
     }
+
+    // PUT /api/users/password
+    [HttpPut("password")]
+    [Authorize] // allow any authenticated user to change their own password
+    public async Task<ActionResult<ApiResponse<object>>> ChangePassword([FromBody] UpdatePasswordRequest request)
+    {
+        var userId = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? "";
+        var email = User.FindFirstValue(JwtRegisteredClaimNames.Email) ?? "";
+        var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
+
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ua = Request.Headers.UserAgent.ToString();
+
+        await _userService.ChangePasswordAsync(userId, email, role, request, ip, ua);
+        return Ok(ApiResponse<object>.Ok(new { }, "Password updated successfully."));
+    }
 }
