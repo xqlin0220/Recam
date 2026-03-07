@@ -13,13 +13,16 @@ public class MediaController : ControllerBase
 {
     private readonly IMediaService _mediaService;
     private readonly IMediaStorageService _storage;
+    private readonly IBlobStorageService _blobStorageService;
 
     public MediaController(
         IMediaService mediaService,
-        IMediaStorageService storage)
+        IMediaStorageService storage,
+        IBlobStorageService blobStorageService )
     {
         _mediaService = mediaService;
         _storage = storage;
+        _blobStorageService = blobStorageService;
     }
 
     [HttpDelete("{id:int}")]
@@ -39,19 +42,23 @@ public class MediaController : ControllerBase
     }
 
     [HttpPost("upload")]
-    public async Task<IActionResult> Upload([FromForm] IFormFile file, [FromForm] string mediaType)
+    public async Task<IActionResult> Upload([FromForm] IFormFile file)
     {
         if (file == null || file.Length == 0)
         {
             return BadRequest("File required");
         }
 
-        await using var stream = file.OpenReadStream();
-        var url = await _storage.UploadAsync(stream, file.FileName, file.ContentType, mediaType);
+        var result = await _blobStorageService.UploadAsync(file);
 
         return Ok(new
         {
-            accessUrl = url
+            fileName = result.FileName,
+            blobName = result.BlobName,
+            category = result.Category,
+            contentType = result.ContentType,
+            size = result.Size,
+            accessUrl = result.AccessUrl
         });
     }
 }
