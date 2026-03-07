@@ -76,6 +76,7 @@ builder.Services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();
 builder.Services.AddScoped<IListcaseRepository, ListcaseRepository>();
 builder.Services.AddScoped<ISelectedMediaService, SelectedMediaService>();
 builder.Services.AddScoped<IAgentMediaSelectionLogService, AgentMediaSelectionLogService>();
+builder.Services.AddScoped<IListingPublishService, ListingPublishService>();
 
 
 var app = builder.Build();

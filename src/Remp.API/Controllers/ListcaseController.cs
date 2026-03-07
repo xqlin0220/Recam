@@ -13,11 +13,13 @@ public class ListcaseController : ControllerBase
 {
     private readonly IMediaAssetService _mediaAssetService;
     private readonly ISelectedMediaService _selectedMediaService;
+    private readonly IListingPublishService _listingPublishService;
 
-    public ListcaseController(IMediaAssetService mediaAssetService, ISelectedMediaService selectedMediaService)
+    public ListcaseController(IMediaAssetService mediaAssetService, ISelectedMediaService selectedMediaService, IListingPublishService listingPublishService)
     {
         _mediaAssetService = mediaAssetService;
         _selectedMediaService = selectedMediaService;
+        _listingPublishService = listingPublishService;
     }
 
     [HttpPut("{id:int}/cover-image")]
@@ -60,5 +62,14 @@ public class ListcaseController : ControllerBase
                 MediaIds = request.MediaIds.Distinct().ToList()
             },
             "Selected media updated successfully."));
+    }
+
+    [HttpPost("{id:int}/publish")]
+    [Authorize(Roles = "agent,photographyCompany")]
+    public async Task<IActionResult> Publish(int id)
+    {
+        var result = await _listingPublishService.PublishAsync(id);
+
+        return Ok(ApiResponse<object>.Ok(result, "Shareable link generated."));
     }
 }
