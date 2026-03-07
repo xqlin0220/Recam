@@ -12,13 +12,16 @@ namespace Remp.Service.Services
     {
         private readonly IBlobStorageService _blobStorageService;
         private readonly IMediaAssetRepository _mediaAssetRepository;
+        private readonly IAgentMediaSelectionLogService _agentMediaSelectionLogService;
 
         public MediaAssetService(
             IBlobStorageService blobStorageService,
-            IMediaAssetRepository mediaAssetRepository)
+            IMediaAssetRepository mediaAssetRepository,
+            IAgentMediaSelectionLogService agentMediaSelectionLogService)
         {
             _blobStorageService = blobStorageService;
             _mediaAssetRepository = mediaAssetRepository;
+            _agentMediaSelectionLogService = agentMediaSelectionLogService;
         }
 
         public async Task<List<MediaAssetUploadResultDto>> UploadMediaAssetsAsync(
@@ -308,6 +311,70 @@ namespace Remp.Service.Services
 
             mediaAsset.IsHero = true;
             await _mediaAssetRepository.UpdateAsync(mediaAsset);
+        }
+
+        public async Task UpdateSelectedMediaAsync(int listcaseId, List<int> mediaIds, string agentId)
+        {
+            if (listcaseId <= 0)
+            {
+                throw new ArgumentException("Invalid listcaseId.");
+            }
+
+            if (string.IsNullOrWhiteSpace(agentId))
+            {
+                throw new ArgumentException("AgentId is required.");
+            }
+
+            if (mediaIds == null || mediaIds.Count == 0)
+            {
+                throw new ArgumentException("At least one mediaId is required.");
+            }
+
+            if (mediaIds.Count > 10)
+            {
+                throw new ArgumentException("A maximum of 10 images can be selected.");
+            }
+
+            var listingExists = await _mediaAssetRepository.ListcaseExistsAsync(listcaseId);
+            if (!listingExists)
+            {
+                throw new KeyNotFoundException($"Listcase {listcaseId} not found.");
+            }
+
+            var distinctMediaIds = mediaIds.Distinct().ToList();
+            var selectedAssets = await _mediaAssetRepository.GetByIdsAsync(distinctMediaIds);
+
+            if (selectedAssets.Count != distinctMediaIds.Count)
+            {
+                throw new ArgumentException("One or more media files do not exist.");
+            }
+
+            var invalidOwnership = selectedAssets.Any(x => x.ListcaseId != listcaseId);
+            if (invalidOwnership)
+            {
+                throw new ArgumentException("One or more media files do not belong to this listing.");
+            }
+
+            var nonPictures = selectedAssets.Any(x => x.MediaType != MediaType.Picture);
+            if (nonPictures)
+            {
+                throw new ArgumentException("Only picture media can be selected for final display.");
+            }
+
+            var allPicturesInListing = await _mediaAssetRepository.GetPicturesByListcaseIdAsync(listcaseId);
+
+            foreach (var media in allPicturesInListing)
+            {
+                media.IsSelect = distinctMediaIds.Contains(media.Id);
+            }
+
+            await _mediaAssetRepository.UpdateRangeAsync(allPicturesInListing);
+
+            await _agentMediaSelectionLogService.LogSelectionAsync(
+                agentId,
+                listcaseId,
+                distinctMediaIds,
+                DateTime.UtcNow);
         }
 
     }

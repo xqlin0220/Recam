@@ -11,5 +11,8 @@ namespace Remp.Repository.Interfaces
         Task<MediaAsset?> GetHeroByListcaseIdAsync(int listcaseId);
         Task UpdateAsync(MediaAsset mediaAsset);
         Task<List<MediaAsset>> GetFinalSelectedByListcaseIdAsync(int listcaseId);
+        Task<List<MediaAsset>> GetByIdsAsync(List<int> mediaIds);
+        Task<List<MediaAsset>> GetPicturesByListcaseIdAsync(int listcaseId);
+        Task UpdateRangeAsync(List<MediaAsset> mediaAssets);
     }
 }

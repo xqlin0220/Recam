@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Remp.DataAccess.Data;
 using Remp.Models.Entities;
 using Remp.Repository.Interfaces;
+using Remp.Models.Enums;
 
 namespace Remp.Repository.Repositories
 {
@@ -61,6 +62,27 @@ namespace Remp.Repository.Repositories
                 .OrderByDescending(x => x.IsHero)
                 .ThenBy(x => x.Id)
                 .ToListAsync();
+        }
+        public async Task<List<MediaAsset>> GetByIdsAsync(List<int> mediaIds)
+        {
+            return await _context.MediaAssets
+                .Where(x => mediaIds.Contains(x.Id) && !x.IsDeleted)
+                .ToListAsync();
+        }
+
+        public async Task<List<MediaAsset>> GetPicturesByListcaseIdAsync(int listcaseId)
+        {
+            return await _context.MediaAssets
+                .Where(x => x.ListcaseId == listcaseId
+                    && x.MediaType == MediaType.Picture
+                    && !x.IsDeleted)
+                .ToListAsync();
+        }
+
+        public async Task UpdateRangeAsync(List<MediaAsset> mediaAssets)
+        {
+            _context.MediaAssets.UpdateRange(mediaAssets);
+            await _context.SaveChangesAsync();
         }
     }
 }
