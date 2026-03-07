@@ -27,10 +27,10 @@ namespace Remp.Service.Services
         {
             ValidateRequest(request);
 
-            var listingCaseExists = await _mediaAssetRepository.ListingCaseExistsAsync(request.ListingCaseId);
-            if (!listingCaseExists)
+            var listcaseExists = await _mediaAssetRepository.ListcaseExistsAsync(request.ListcaseId);
+            if (!listcaseExists)
             {
-                throw new ArgumentException($"ListcaseId {request.ListingCaseId} does not exist.");
+                throw new ArgumentException($"ListcaseId {request.ListcaseId} does not exist.");
             }
 
             var results = new List<MediaAssetUploadResultDto>();
@@ -49,7 +49,7 @@ namespace Remp.Service.Services
                     IsSelect = false,
                     IsHero = false,
                     IsDeleted = false,
-                    ListcaseId = request.ListingCaseId,
+                    ListcaseId = request.ListcaseId,
                     UserId = userId
                 };
 
@@ -58,7 +58,7 @@ namespace Remp.Service.Services
                 results.Add(new MediaAssetUploadResultDto
                 {
                     MediaAssetId = savedEntity.Id,
-                    ListingCaseId = savedEntity.ListcaseId,
+                    ListcaseId = savedEntity.ListcaseId,
                     MediaType = (int)savedEntity.MediaType,
                     MediaUrl = savedEntity.MediaUrl,
                     UploadedAt = savedEntity.UploadedAt
@@ -75,9 +75,9 @@ namespace Remp.Service.Services
                 throw new ArgumentException("Request is required.");
             }
 
-            if (request.ListingCaseId <= 0)
+            if (request.ListcaseId <= 0)
             {
-                throw new ArgumentException("ListingCaseId is required.");
+                throw new ArgumentException("ListcaseId is required.");
             }
 
             if (request.Files == null || request.Files.Count == 0)
@@ -117,23 +117,23 @@ namespace Remp.Service.Services
             return await _blobStorageService.DownloadFileAsync(mediaAsset.MediaUrl);
         }
 
-        public async Task<(Stream Content, string ContentType, string FileName)> DownloadListcaseZipAsync(int listingCaseId)
+        public async Task<(Stream Content, string ContentType, string FileName)> DownloadListcaseZipAsync(int listcaseId)
         {
-            if (listingCaseId <= 0)
+            if (listcaseId <= 0)
             {
-                throw new ArgumentException("Invalid listingCaseId.");
+                throw new ArgumentException("Invalid listcaseId.");
             }
 
-            var listingCaseExists = await _mediaAssetRepository.ListingCaseExistsAsync(listingCaseId);
-            if (!listingCaseExists)
+            var listcaseExists = await _mediaAssetRepository.ListcaseExistsAsync(listcaseId);
+            if (!listcaseExists)
             {
-                throw new KeyNotFoundException($"ListingCase {listingCaseId} not found.");
+                throw new KeyNotFoundException($"Listcase {listcaseId} not found.");
             }
 
-            var mediaAssets = await _mediaAssetRepository.GetByListingCaseIdAsync(listingCaseId);
+            var mediaAssets = await _mediaAssetRepository.GetByListcaseIdAsync(listcaseId);
             if (mediaAssets.Count == 0)
             {
-                throw new KeyNotFoundException($"No media assets found for ListingCase {listingCaseId}.");
+                throw new KeyNotFoundException($"No media assets found for Listcase {listcaseId}.");
             }
 
             var zipStream = new MemoryStream();
@@ -167,7 +167,7 @@ namespace Remp.Service.Services
 
             zipStream.Position = 0;
 
-            var zipFileName = $"listingcase-{listingCaseId}-media.zip";
+            var zipFileName = $"listcase-{listcaseId}-media.zip";
             return (zipStream, "application/zip", zipFileName);
         }
 
@@ -263,6 +263,51 @@ namespace Remp.Service.Services
             {
                 throw new ArgumentException($"File extension {extension} is not allowed for media type {type}.");
             }
+        }
+        public async Task SetCoverImageAsync(int listcaseId, int mediaId)
+        {
+            if (listcaseId <= 0)
+            {
+                throw new ArgumentException("Invalid listcaseId.");
+            }
+
+            if (mediaId <= 0)
+            {
+                throw new ArgumentException("Invalid mediaId.");
+            }
+
+            var listcaseExists = await _mediaAssetRepository.ListcaseExistsAsync(listcaseId);
+            if (!listcaseExists)
+            {
+                throw new KeyNotFoundException($"Listcase {listcaseId} not found.");
+            }
+
+            var mediaAsset = await _mediaAssetRepository.GetByIdAsync(mediaId);
+            if (mediaAsset == null)
+            {
+                throw new KeyNotFoundException($"MediaAsset {mediaId} not found.");
+            }
+
+            if (mediaAsset.ListcaseId != listcaseId)
+            {
+                throw new ArgumentException("The provided mediaId does not belong to this listing.");
+            }
+
+            if (mediaAsset.MediaType != MediaType.Picture)
+            {
+                throw new ArgumentException("Only picture media can be set as cover image.");
+            }
+
+            var currentHero = await _mediaAssetRepository.GetHeroByListcaseIdAsync(listcaseId);
+
+            if (currentHero != null && currentHero.Id != mediaAsset.Id)
+            {
+                currentHero.IsHero = false;
+                await _mediaAssetRepository.UpdateAsync(currentHero);
+            }
+
+            mediaAsset.IsHero = true;
+            await _mediaAssetRepository.UpdateAsync(mediaAsset);
         }
 
     }

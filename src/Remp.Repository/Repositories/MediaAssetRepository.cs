@@ -21,9 +21,9 @@ namespace Remp.Repository.Repositories
             return mediaAsset;
         }
 
-        public async Task<bool> ListingCaseExistsAsync(int listingCaseId)
+        public async Task<bool> ListcaseExistsAsync(int listcaseId)
         {
-            return await _context.Listcases.AnyAsync(x => x.Id == listingCaseId);
+            return await _context.Listcases.AnyAsync(x => x.Id == listcaseId);
         }
 
         public async Task<MediaAsset?> GetByIdAsync(int mediaAssetId)
@@ -31,12 +31,26 @@ namespace Remp.Repository.Repositories
             return await _context.MediaAssets
                 .FirstOrDefaultAsync(x => x.Id == mediaAssetId && !x.IsDeleted);
         }
-        public async Task<List<MediaAsset>> GetByListingCaseIdAsync(int listingCaseId)
+        public async Task<List<MediaAsset>> GetByListcaseIdAsync(int listcaseId)
         {
             return await _context.MediaAssets
-                .Where(x => x.ListcaseId == listingCaseId && !x.IsDeleted)
+                .Where(x => x.ListcaseId == listcaseId && !x.IsDeleted)
                 .OrderBy(x => x.Id)
                 .ToListAsync();
+        }
+
+        public async Task<MediaAsset?> GetHeroByListcaseIdAsync(int listcaseId)
+        {
+            return await _context.MediaAssets
+                .FirstOrDefaultAsync(x => x.ListcaseId == listcaseId
+                    && x.IsHero
+                    && !x.IsDeleted);
+        }
+
+        public async Task UpdateAsync(MediaAsset mediaAsset)
+        {
+            _context.MediaAssets.Update(mediaAsset);
+            await _context.SaveChangesAsync();
         }
     }
 }
