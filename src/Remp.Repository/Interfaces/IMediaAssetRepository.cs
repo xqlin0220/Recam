@@ -7,5 +7,6 @@ namespace Remp.Repository.Interfaces
         Task<MediaAsset> AddAsync(MediaAsset mediaAsset);
         Task<bool> ListingCaseExistsAsync(int listingCaseId);
         Task<MediaAsset?> GetByIdAsync(int mediaAssetId);
+        Task<List<MediaAsset>> GetByListingCaseIdAsync(int listingCaseId);
     }
 }

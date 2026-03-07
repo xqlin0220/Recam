@@ -85,4 +85,13 @@ public class MediaController : ControllerBase
 
         return File(fileStream, contentType, fileName);
     }
+
+    [HttpGet("/api/listingcase/{id:int}/download")]
+    [Authorize]
+    public async Task<IActionResult> DownloadListcaseZip(int id)
+    {
+        var (fileStream, contentType, fileName) = await _mediaAssetService.DownloadListcaseZipAsync(id);
+
+        return File(fileStream, contentType, fileName);
+    }
 }
