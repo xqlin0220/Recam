@@ -72,6 +72,8 @@ builder.Services.AddScoped<IMediaStorageService, MediaStorageService>();
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 builder.Services.AddScoped<IMediaAssetService, MediaAssetService>();
 builder.Services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();
+builder.Services.AddScoped<IListcaseRepository, ListcaseRepository>();
+builder.Services.AddScoped<ISelectedMediaService, SelectedMediaService>();
 
 
 var app = builder.Build();
