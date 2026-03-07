@@ -164,5 +164,64 @@ namespace Remp.Service.Services
                 _ => "application/octet-stream"
             };
         }
+
+        private static string GetFileNameFromBlobUrl(Uri blobUri)
+        {
+            return Uri.UnescapeDataString(Path.GetFileName(blobUri.AbsolutePath));
+        }
+
+        private static string GetAccountNameFromConnectionString(string connectionString)
+        {
+            return connectionString
+                .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                .Select(part => part.Split('=', 2))
+                .Where(parts => parts.Length == 2)
+                .First(parts => parts[0].Equals("AccountName", StringComparison.OrdinalIgnoreCase))[1];
+        }
+
+        private static string GetAccountKeyFromConnectionString(string connectionString)
+        {
+            return connectionString
+                .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                .Select(part => part.Split('=', 2))
+                .Where(parts => parts.Length == 2)
+                .First(parts => parts[0].Equals("AccountKey", StringComparison.OrdinalIgnoreCase))[1];
+        }
+
+        public async Task<(Stream Content, string ContentType, string FileName)> DownloadFileAsync(string blobUrl)
+        {
+            if (string.IsNullOrWhiteSpace(blobUrl))
+            {
+                throw new ArgumentException("Blob URL is required.");
+            }
+
+            if (!Uri.TryCreate(blobUrl, UriKind.Absolute, out var blobUri))
+            {
+                throw new ArgumentException("Invalid blob URL.");
+            }
+
+            var blobClient = new BlobClient(blobUri);
+
+            var exists = await blobClient.ExistsAsync();
+            if (!exists.Value)
+            {
+                throw new FileNotFoundException("Blob file not found.");
+            }
+
+            var properties = await blobClient.GetPropertiesAsync();
+            var contentType = properties.Value.ContentType ?? "application/octet-stream";
+
+            var fileName = Path.GetFileName(blobUri.LocalPath);
+
+            if (properties.Value.Metadata.TryGetValue("originalFileName", out var originalFileName) &&
+                !string.IsNullOrWhiteSpace(originalFileName))
+            {
+                fileName = originalFileName;
+            }
+
+            var stream = await blobClient.OpenReadAsync();
+
+            return (stream, contentType, fileName);
+        }
     }
 }

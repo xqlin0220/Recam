@@ -76,4 +76,13 @@ public class MediaController : ControllerBase
 
         return Ok(ApiResponse<object>.Ok(result, "Media assets uploaded successfully."));
     }
+
+    [HttpGet("download/{mediaAssetId:int}")]
+    [Authorize]
+    public async Task<IActionResult> DownloadMediaAsset(int mediaAssetId)
+    {
+        var (fileStream, contentType, fileName) = await _mediaAssetService.DownloadMediaAssetAsync(mediaAssetId);
+
+        return File(fileStream, contentType, fileName);
+    }
 }

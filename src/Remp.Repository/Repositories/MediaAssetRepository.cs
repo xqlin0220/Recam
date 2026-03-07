@@ -25,5 +25,11 @@ namespace Remp.Repository.Repositories
         {
             return await _context.Listcases.AnyAsync(x => x.Id == listingCaseId);
         }
+
+        public async Task<MediaAsset?> GetByIdAsync(int mediaAssetId)
+        {
+            return await _context.MediaAssets
+                .FirstOrDefaultAsync(x => x.Id == mediaAssetId && !x.IsDeleted);
+        }
     }
 }

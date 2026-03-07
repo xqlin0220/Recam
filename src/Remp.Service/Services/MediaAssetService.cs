@@ -43,7 +43,7 @@ namespace Remp.Service.Services
                 var mediaAsset = new MediaAsset
                 {
                     MediaType = request.Type,
-                    MediaUrl = uploadResult.AccessUrl, 
+                    MediaUrl = uploadResult.BlobUrl, 
                     UploadedAt = DateTime.UtcNow,
                     IsSelect = false,
                     IsHero = false,
@@ -132,6 +132,27 @@ namespace Remp.Service.Services
             {
                 throw new ArgumentException($"File extension {extension} is not allowed for media type {type}.");
             }
+        }
+
+        public async Task<(Stream Content, string ContentType, string FileName)> DownloadMediaAssetAsync(int mediaAssetId)
+        {
+            if (mediaAssetId <= 0)
+            {
+                throw new ArgumentException("Invalid mediaAssetId.");
+            }
+
+            var mediaAsset = await _mediaAssetRepository.GetByIdAsync(mediaAssetId);
+            if (mediaAsset == null)
+            {
+                throw new KeyNotFoundException($"MediaAsset {mediaAssetId} not found.");
+            }
+
+            if (string.IsNullOrWhiteSpace(mediaAsset.MediaUrl))
+            {
+                throw new ArgumentException("Media URL is empty.");
+            }
+
+            return await _blobStorageService.DownloadFileAsync(mediaAsset.MediaUrl);
         }
     }
 }
