@@ -1,0 +1,29 @@
+using Microsoft.EntityFrameworkCore;
+using Remp.DataAccess.Data;
+using Remp.Models.Entities;
+using Remp.Repository.Interfaces;
+
+namespace Remp.Repository.Repositories
+{
+    public class MediaAssetRepository : IMediaAssetRepository
+    {
+        private readonly AppDbContext _context;
+
+        public MediaAssetRepository(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<MediaAsset> AddAsync(MediaAsset mediaAsset)
+        {
+            _context.MediaAssets.Add(mediaAsset);
+            await _context.SaveChangesAsync();
+            return mediaAsset;
+        }
+
+        public async Task<bool> ListingCaseExistsAsync(int listingCaseId)
+        {
+            return await _context.Listcases.AnyAsync(x => x.Id == listingCaseId);
+        }
+    }
+}

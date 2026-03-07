@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Remp.Common.Utilities;
+using Remp.Service.DTOs;
 using Remp.Service.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -14,15 +15,18 @@ public class MediaController : ControllerBase
     private readonly IMediaService _mediaService;
     private readonly IMediaStorageService _storage;
     private readonly IBlobStorageService _blobStorageService;
+    private readonly IMediaAssetService _mediaAssetService;
 
     public MediaController(
         IMediaService mediaService,
         IMediaStorageService storage,
-        IBlobStorageService blobStorageService )
+        IBlobStorageService blobStorageService,
+        IMediaAssetService mediaAssetService)
     {
         _mediaService = mediaService;
         _storage = storage;
         _blobStorageService = blobStorageService;
+        _mediaAssetService = mediaAssetService;
     }
 
     [HttpDelete("{id:int}")]
@@ -60,5 +64,16 @@ public class MediaController : ControllerBase
             size = result.Size,
             accessUrl = result.AccessUrl
         });
+    }
+
+    [HttpPost("upload-media-assets")]
+    [Authorize(Roles = "photographyCompany")]
+    public async Task<IActionResult> UploadMediaAssets([FromForm] UploadMediaAssetsRequestDto request)
+    {
+        var userId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? "";
+
+        var result = await _mediaAssetService.UploadMediaAssetsAsync(request, userId);
+
+        return Ok(ApiResponse<object>.Ok(result, "Media assets uploaded successfully."));
     }
 }
