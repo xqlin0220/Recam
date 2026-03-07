@@ -12,10 +12,14 @@ namespace Remp.API.Controllers;
 public class MediaController : ControllerBase
 {
     private readonly IMediaService _mediaService;
+    private readonly IMediaStorageService _storage;
 
-    public MediaController(IMediaService mediaService)
+    public MediaController(
+        IMediaService mediaService,
+        IMediaStorageService storage)
     {
         _mediaService = mediaService;
+        _storage = storage;
     }
 
     [HttpDelete("{id:int}")]
@@ -32,5 +36,22 @@ public class MediaController : ControllerBase
         await _mediaService.DeleteAsync(id, userId, email, role, ip, ua);
 
         return Ok(ApiResponse<object>.Ok(new { id }, $"Media {id} deleted successfully."));
+    }
+
+    [HttpPost("upload")]
+    public async Task<IActionResult> Upload([FromForm] IFormFile file, [FromForm] string mediaType)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest("File required");
+        }
+
+        await using var stream = file.OpenReadStream();
+        var url = await _storage.UploadAsync(stream, file.FileName, file.ContentType, mediaType);
+
+        return Ok(new
+        {
+            accessUrl = url
+        });
     }
 }
