@@ -9,5 +9,6 @@ namespace Remp.Service.Interfaces
             string userId);
 
         Task<(Stream Content, string ContentType, string FileName)> DownloadMediaAssetAsync(int mediaAssetId);
+        Task<(Stream Content, string ContentType, string FileName)> DownloadListcaseZipAsync(int listcaseId);
     }
 }

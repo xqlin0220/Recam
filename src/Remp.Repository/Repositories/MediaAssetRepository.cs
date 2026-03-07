@@ -31,5 +31,12 @@ namespace Remp.Repository.Repositories
             return await _context.MediaAssets
                 .FirstOrDefaultAsync(x => x.Id == mediaAssetId && !x.IsDeleted);
         }
+        public async Task<List<MediaAsset>> GetByListingCaseIdAsync(int listingCaseId)
+        {
+            return await _context.MediaAssets
+                .Where(x => x.ListcaseId == listingCaseId && !x.IsDeleted)
+                .OrderBy(x => x.Id)
+                .ToListAsync();
+        }
     }
 }
