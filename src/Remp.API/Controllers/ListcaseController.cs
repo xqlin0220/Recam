@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Remp.Common.Utilities;
 using Remp.Service.DTOs;
 using Remp.Service.Interfaces;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Remp.API.Controllers;
 
@@ -39,5 +40,25 @@ public class ListcaseController : ControllerBase
         var result = await _selectedMediaService.GetFinalSelectedMediaAsync(id);
 
         return Ok(ApiResponse<object>.Ok(result, "Final selected media retrieved successfully."));
+    }
+
+    [HttpPut("{id:int}/selected-media")]
+    [Authorize(Roles = "agent")]
+    public async Task<ActionResult<ApiResponse<object>>> UpdateSelectedMedia(
+        int id,
+        [FromBody] UpdateSelectedMediaRequestDto request)
+    {
+        var agentId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? string.Empty;
+
+        await _mediaAssetService.UpdateSelectedMediaAsync(id, request.MediaIds, agentId);
+
+        return Ok(ApiResponse<object>.Ok(
+            new
+            {
+                ListingId = id,
+                SelectedCount = request.MediaIds.Distinct().Count(),
+                MediaIds = request.MediaIds.Distinct().ToList()
+            },
+            "Selected media updated successfully."));
     }
 }
