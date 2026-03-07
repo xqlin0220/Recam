@@ -7,6 +7,6 @@ namespace Remp.Service.DTOs
     {
         public List<IFormFile> Files { get; set; } = new();
         public MediaType Type { get; set; }
-        public int ListingCaseId { get; set; }
+        public int ListcaseId { get; set; }
     }
 }
