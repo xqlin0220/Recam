@@ -18,5 +18,10 @@ namespace Remp.Repository.Repositories
         {
             return await _context.Listcases.FirstOrDefaultAsync(x => x.Id == id);
         }
+        public async Task UpdateAsync(Listcase listcase)
+        {
+            _context.Listcases.Update(listcase);
+            await _context.SaveChangesAsync();
+        }
     }
 }
