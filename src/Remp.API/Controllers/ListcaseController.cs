@@ -11,10 +11,12 @@ namespace Remp.API.Controllers;
 public class ListcaseController : ControllerBase
 {
     private readonly IMediaAssetService _mediaAssetService;
+    private readonly ISelectedMediaService _selectedMediaService;
 
-    public ListcaseController(IMediaAssetService mediaAssetService)
+    public ListcaseController(IMediaAssetService mediaAssetService, ISelectedMediaService selectedMediaService)
     {
         _mediaAssetService = mediaAssetService;
+        _selectedMediaService = selectedMediaService;
     }
 
     [HttpPut("{id:int}/cover-image")]
@@ -28,5 +30,14 @@ public class ListcaseController : ControllerBase
         return Ok(ApiResponse<object>.Ok(
             new { ListingId = id, request.MediaId },
             "Cover image updated successfully."));
+    }
+
+    [HttpGet("{id:int}/final-selection")]
+    [Authorize(Roles = "photographyCompany,agent")]
+    public async Task<ActionResult<ApiResponse<object>>> GetFinalSelection(int id)
+    {
+        var result = await _selectedMediaService.GetFinalSelectedMediaAsync(id);
+
+        return Ok(ApiResponse<object>.Ok(result, "Final selected media retrieved successfully."));
     }
 }

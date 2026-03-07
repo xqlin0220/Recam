@@ -52,5 +52,15 @@ namespace Remp.Repository.Repositories
             _context.MediaAssets.Update(mediaAsset);
             await _context.SaveChangesAsync();
         }
+        public async Task<List<MediaAsset>> GetFinalSelectedByListcaseIdAsync(int listcaseId)
+        {
+            return await _context.MediaAssets
+                .Where(x => x.ListcaseId == listcaseId
+                            && x.IsSelect
+                            && !x.IsDeleted)
+                .OrderByDescending(x => x.IsHero)
+                .ThenBy(x => x.Id)
+                .ToListAsync();
+        }
     }
 }
