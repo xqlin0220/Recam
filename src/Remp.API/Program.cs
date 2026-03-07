@@ -7,6 +7,8 @@ using Remp.DataAccess.Data;
 using Remp.Service.Interfaces;
 using Remp.Service.Services;
 using System.Text;
+using Remp.Repository.Interfaces;
+using Remp.Repository.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,6 +71,9 @@ builder.Services.AddScoped<IAgentService, AgentService>();
 builder.Services.AddScoped<IAdminAuditLogService, AdminAuditLogService>();
 builder.Services.AddScoped<IMediaStorageService, MediaStorageService>();
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
+builder.Services.AddScoped<IMediaAssetService, MediaAssetService>();
+builder.Services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();
+
 
 var app = builder.Build();
 
