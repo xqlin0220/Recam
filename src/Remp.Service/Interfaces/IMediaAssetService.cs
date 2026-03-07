@@ -7,5 +7,7 @@ namespace Remp.Service.Interfaces
         Task<List<MediaAssetUploadResultDto>> UploadMediaAssetsAsync(
             UploadMediaAssetsRequestDto request,
             string userId);
+
+        Task<(Stream Content, string ContentType, string FileName)> DownloadMediaAssetAsync(int mediaAssetId);
     }
 }
